@@ -21,14 +21,18 @@ public static class IncidentEndpoints
             .Produces<IncidentDetailsResponse>()
             .ProducesProblem(StatusCodes.Status404NotFound);
 
-        group.MapGet("/severity-summary", () => Results.Problem(
-                title: "Точку розширення ще не реалізовано",
-                detail: "Завершіть цей endpoint під час лабораторної роботи № 1.",
-                statusCode: StatusCodes.Status501NotImplemented))
-            .WithName("GetIncidentSeveritySummary")
-            .ProducesProblem(StatusCodes.Status501NotImplemented);
+        group.MapGet("/severity-summary", GetSeveritySummaryAsync)
+    .WithName("GetIncidentSeveritySummary")
+    .Produces<IReadOnlyList<IncidentSeveritySummaryResponse>>();
 
         return endpoints;
+    }
+    private static async Task<IResult> GetSeveritySummaryAsync(
+    IncidentQueries queries,
+    CancellationToken cancellationToken)
+    {
+        var result = await queries.GetSeveritySummaryAsync(cancellationToken);
+        return Results.Ok(result);
     }
 
     private static async Task<IResult> GetListAsync(

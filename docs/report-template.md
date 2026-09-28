@@ -5,7 +5,7 @@
 - Варіант: 2-A «Трекер інцидентів».
 - Гілка: `lab/1-system`.
 - Фінальний тег: `v0.1.0`.
-- Commit hash: `TODO`.
+- Commit hash: `5fe2e615bac5b0bac83c2baea7c4d8c2ecc4e3b0`.
 
 ## 2. Змінений маршрут
 

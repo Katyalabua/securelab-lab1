@@ -28,10 +28,26 @@ public static class IncidentEndpoints
         return endpoints;
     }
     private static async Task<IResult> GetSeveritySummaryAsync(
+    string? status,
     IncidentQueries queries,
     CancellationToken cancellationToken)
     {
-        var result = await queries.GetSeveritySummaryAsync(cancellationToken);
+        IncidentStatus? parsedStatus = null;
+        if (status is not null)
+        {
+            if (!Enum.TryParse<IncidentStatus>(status, ignoreCase: true, out var candidate)
+                || !Enum.IsDefined(candidate))
+            {
+                return Results.ValidationProblem(new Dictionary<string, string[]>
+                {
+                    ["status"] = ["Допустимі значення: New, Triaged, InProgress, Resolved, Closed."]
+                });
+            }
+
+            parsedStatus = candidate;
+        }
+
+        var result = await queries.GetSeveritySummaryAsync(parsedStatus, cancellationToken);
         return Results.Ok(result);
     }
 

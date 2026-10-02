@@ -25,7 +25,20 @@ Accept: application/json
 GET {{host}}/api/incidents?status=Unknown
 Accept: application/json
 
-### Lab 1 extension point: expected 501 before student implementation (expected 200), 
-(severity summary, implemented (existing-groups policy, lexicographic order))
+### Lab 1 extension point
+
+### Severity summary: successful call without filter
 GET {{host}}/api/incidents/severity-summary
+Accept: application/json
+
+### Severity summary: successful call with status filter (non-empty result)
+GET {{host}}/api/incidents/severity-summary?status=Triaged
+Accept: application/json
+
+### Severity summary: successful call with status filter (empty result)
+GET {{host}}/api/incidents/severity-summary?status=Closed
+Accept: application/json
+
+### Severity summary: invalid status filter (expected 400 Validation Problem Details)
+GET {{host}}/api/incidents/severity-summary?status=Unknown
 Accept: application/json

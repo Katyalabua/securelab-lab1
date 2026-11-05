@@ -9,7 +9,7 @@
 - Квитанція `.scaffolds/lab-02.json`: release `lab-02-start-v1`; base_commit `9b82a5f5d653f6806b0e08e22180f83bd9e9e055`; entry_parent `9b82a5f5d653f6806b0e08e22180f83bd9e9e055`.
 - Vulnerable commit: `b2f04c692a79a810affdb20251966009f2c9744a`.
 - Fixed commit коду: `871e4974a3cae5c6d0f40111f2f1ecd006dc97a4`. Тег `v0.2.0` стоїть на commit із завершеним звітом.
-- DEL-01: <URL приватного remote або ім'я bundle `securelab-lr02.bundle`>.
+- DEL-01: bundle `securelab-lr02.bundle`.
 
 ## 2. Контракт і CP-01
 
@@ -83,8 +83,8 @@ Build і baseline-тести після останньої зміни коду: 
 
 ## 7. Передавання
 
-- Remote доступний викладачеві або bundle перевірено через `verify`/`list-heads`: <результат>.
-- У Moodle файли/докази видимі й роботу надіслано: <так/ні>.
+- Remote доступний викладачеві або bundle перевірено через `verify`/`list-heads`: bundle `securelab-lr02.bundle` пройшов `git bundle verify`, `list-heads` показує гілку `lab/2-input-sqli` і тег `v0.2.0`.
+- У Moodle файли/докази видимі й роботу надіслано: так.
 - Git diff та історію перевірено на секрети: `.env`, паролів, токенів, cookies і дампів БД у репозиторії немає.
 
 ## 8. Докази (текстові фрагменти)

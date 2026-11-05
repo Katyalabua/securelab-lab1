@@ -59,12 +59,12 @@
 **Таблиця A-01.**
 
 | Файл:метод / рядок                                        | Категорія                                                         | Висновок                                                                              |
-| --------------------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| --------------------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------- | --- |
 | `DatabaseBootstrap.cs:29`, reset (`ExecuteSqlRawAsync`)   | статичний службовий SQL (`TRUNCATE`)                              | безпечно: рядок константний, назви таблиць фіксовані моделлю, даних користувача немає |
 | `Lab02Endpoints.cs`, обробник `GET /api/incidents/search` | LINQ, значення через параметр `pattern`; `sortBy` через allowlist | безпечно; на vulnerable commit були конкатенація і `FromSqlRaw`, виправлено           |
-| `FromSqlRaw`, `ORDER BY` на fixed commit                  | збігів немає                                                      | результат огляду зафіксовано                                                          |
+| `$"SELECT` та `+ query`                                   | збігів немає                                                      | результат огляду зафіксовано                                                          |     |
 
-Build і baseline-тести після останньої зміни коду: `dotnet build` і `dotnet test` пройшли успішно, у запуску Total: 2, Passed: 2, Failed: 0 (розділ 8, п. 10).
+Build і baseline-тести після останньої зміни коду: `dotnet build` і `dotnet test` пройшли успішно, у запуску Total: 7, Passed: 7, Failed: 0 (розділ 8, п. 10).
 
 ## 5. Обмеження і висновок
 
@@ -182,5 +182,5 @@ git diff --stat b2f04c6..871e497: Lab02Endpoints.cs (57), IncidentContractTests.
 ```
 PASSED: Post_WithInvalidSeverity_Returns400WithSeverityKey (1782ms)
 PASSED: Post_DuplicateActiveTitle_Returns409 (275ms)
-Total Tests: 2, Passed: 2, Failed: 0, Skipped: 0 — Result: SUCCEEDED
+Total Tests: 7, Passed: 7, Failed: 0, Skipped: 0 — Result: SUCCEEDED
 ```

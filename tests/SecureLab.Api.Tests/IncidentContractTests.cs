@@ -9,11 +9,14 @@ namespace SecureLab.Api.Tests;
 
 public sealed class IncidentContractTests(SecureLabApiFactory factory) : IClassFixture<SecureLabApiFactory>
 {
-    private readonly HttpClient _client = factory.CreateClient();
+    private static string StudyPassword =>
+        Environment.GetEnvironmentVariable("SeedUsers__Password")
+        ?? throw new InvalidOperationException("Set local SeedUsers__Password outside Git.");
 
     [Fact]
     public async Task Post_WithInvalidSeverity_Returns400WithSeverityKey()
     {
+        using var client = await factory.LoginAsync("alice", StudyPassword);
         var body = new
         {
             title = $"Regression-{Guid.NewGuid():N}",
@@ -22,7 +25,7 @@ public sealed class IncidentContractTests(SecureLabApiFactory factory) : IClassF
             occurredAtUtc = DateTimeOffset.UtcNow.AddMinutes(-10)
         };
 
-        using var response = await _client.PostAsJsonAsync("/api/incidents", body);
+        using var response = await client.PostAsJsonAsync("/api/incidents", body);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
@@ -37,6 +40,7 @@ public sealed class IncidentContractTests(SecureLabApiFactory factory) : IClassF
     [Fact]
     public async Task Post_DuplicateActiveTitle_Returns409()
     {
+        using var client = await factory.LoginAsync("alice", StudyPassword);
         var title = $"Regression-{Guid.NewGuid():N}";
         var body = new
         {
@@ -48,10 +52,10 @@ public sealed class IncidentContractTests(SecureLabApiFactory factory) : IClassF
 
         try
         {
-            using var first = await _client.PostAsJsonAsync("/api/incidents", body);
+            using var first = await client.PostAsJsonAsync("/api/incidents", body);
             Assert.Equal(HttpStatusCode.Created, first.StatusCode);
 
-            using var second = await _client.PostAsJsonAsync("/api/incidents", body);
+            using var second = await client.PostAsJsonAsync("/api/incidents", body);
             Assert.Equal(HttpStatusCode.Conflict, second.StatusCode);
             Assert.Equal("application/problem+json", second.Content.Headers.ContentType?.MediaType);
         }

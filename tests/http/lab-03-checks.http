@@ -1,0 +1,7 @@
+@api = http://localhost:5080
+
+### Register: відсутнє поле
+POST {{api}}/api/auth/register
+Content-Type: application/json
+
+{ "userName": "x1", "email": "x1@example.test", "displayName": "X" }

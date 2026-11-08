@@ -1,11 +1,13 @@
 using Microsoft.AspNetCore.Identity;
 using SecureLab.Api.Data;
 using SecureLab.Api.Data.Entities;
+using System.Text.RegularExpressions;
 
 namespace SecureLab.Api.Scaffolding;
 
 public static class Lab03Identity
 {
+    private static readonly Regex UserNamePattern = new(@"^[A-Za-z0-9\-._@+]{3,256}$");
     public static void AddLab03Identity(this WebApplicationBuilder builder)
     {
         builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
@@ -36,22 +38,38 @@ public static class Lab03Identity
     public static void MapLab03Identity(this WebApplication app)
     {
         app.MapPost("/api/auth/register", async (RegistrationInput input, UserManager<ApplicationUser> users) =>
-        {
-            // ЛР 03: завершіть DTO validation та перевірки довірчої межі.
-            if (string.IsNullOrWhiteSpace(input.UserName) || string.IsNullOrWhiteSpace(input.Email)
-                || string.IsNullOrWhiteSpace(input.DisplayName) || string.IsNullOrEmpty(input.Password))
-                return Results.BadRequest();
-            var user = new ApplicationUser
-            {
-                Id = Guid.NewGuid(), UserName = input.UserName.Trim(), Email = input.Email.Trim(),
-                DisplayName = input.DisplayName.Trim()
-            };
-            var result = await users.CreateAsync(user, input.Password);
-            if (!result.Succeeded) return Results.BadRequest(new { message = "Registration failed" });
-            var role = await users.AddToRoleAsync(user, DbSeeder.ReporterRole);
-            if (!role.Succeeded) throw new InvalidOperationException("Default role assignment failed.");
-            return Results.Created("/api/me", new { user.Id, user.UserName, user.DisplayName });
-        });
+{
+    var userName = input.UserName?.Trim();
+    var email = input.Email?.Trim();
+    var displayName = input.DisplayName?.Trim();
+    var password = input.Password;
+
+    if (string.IsNullOrEmpty(userName) || string.IsNullOrEmpty(email)
+        || string.IsNullOrEmpty(displayName) || string.IsNullOrEmpty(password))
+        return Results.BadRequest();
+    if (!UserNamePattern.IsMatch(userName) || email.Length > 256
+        || displayName.Length > 120 || password.Length > 128)
+        return Results.BadRequest(new { message = "Registration failed" });
+
+    var user = new ApplicationUser
+    {
+        Id = Guid.NewGuid(),
+        UserName = userName,
+        Email = email,
+        DisplayName = displayName
+    };
+    var result = await users.CreateAsync(user, password);
+    if (!result.Succeeded)
+    {
+        var codes = result.Errors.Select(e => e.Code).ToArray();
+        if (codes.Contains("DuplicateUserName") || codes.Contains("DuplicateEmail"))
+            return Results.Json(new { message = "Identifier already in use" }, statusCode: 409);
+        return Results.BadRequest(new { message = "Registration failed" });
+    }
+    var role = await users.AddToRoleAsync(user, DbSeeder.ReporterRole);
+    if (!role.Succeeded) throw new InvalidOperationException("Default role assignment failed.");
+    return Results.Created("/api/me", new RegistrationResponse(user.Id, user.UserName!, user.DisplayName));
+});
         app.MapPost("/api/auth/login", async (LoginInput input, SignInManager<ApplicationUser> signIn) =>
         {
             if (string.IsNullOrWhiteSpace(input.UserName) || string.IsNullOrEmpty(input.Password))
@@ -75,3 +93,4 @@ public static class Lab03Identity
 
 public sealed record RegistrationInput(string? UserName, string? Email, string? DisplayName, string? Password);
 public sealed record LoginInput(string? UserName, string? Password);
+public sealed record RegistrationResponse(Guid Id, string UserName, string DisplayName);

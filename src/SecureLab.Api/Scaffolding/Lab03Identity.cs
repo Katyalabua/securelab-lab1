@@ -3,6 +3,8 @@ using SecureLab.Api.Data;
 using SecureLab.Api.Data.Entities;
 using System.Text.RegularExpressions;
 using System.Security.Claims;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace SecureLab.Api.Scaffolding;
 
@@ -34,6 +36,29 @@ public static class Lab03Identity
                 return Task.CompletedTask;
             };
         });
+        builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("login", httpContext =>
+    {
+        var config = httpContext.RequestServices.GetRequiredService<IConfiguration>();
+        return RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = config.GetValue("Auth:LoginRateLimit:PermitLimit", 10),
+                Window = TimeSpan.FromSeconds(config.GetValue("Auth:LoginRateLimit:WindowSeconds", 60)),
+                QueueLimit = 0
+            });
+    });
+    options.OnRejected = (context, _) =>
+    {
+        var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+        logger.LogWarning("Auth event {EventType}: result {Result}, time {OccurredAtUtc}, trace {TraceId}",
+            "login", "rate_limited", DateTimeOffset.UtcNow, context.HttpContext.TraceIdentifier);
+        return ValueTask.CompletedTask;
+    };
+});
     }
 
     public static void MapLab03Identity(this WebApplication app)
@@ -71,13 +96,18 @@ public static class Lab03Identity
     if (!role.Succeeded) throw new InvalidOperationException("Default role assignment failed.");
     return Results.Created("/api/me", new RegistrationResponse(user.Id, user.UserName!, user.DisplayName));
 });
-        app.MapPost("/api/auth/login", async (LoginInput input, SignInManager<ApplicationUser> signIn) =>
-        {
-            if (string.IsNullOrWhiteSpace(input.UserName) || string.IsNullOrEmpty(input.Password))
-                return Results.Unauthorized();
-            var result = await signIn.PasswordSignInAsync(input.UserName, input.Password, false, false);
-            return result.Succeeded ? Results.NoContent() : Results.Unauthorized();
-        });
+        app.MapPost("/api/auth/login", async (LoginInput input, SignInManager<ApplicationUser> signIn,
+    HttpContext httpContext, ILogger<Program> logger) =>
+{
+    if (string.IsNullOrWhiteSpace(input.UserName) || string.IsNullOrEmpty(input.Password))
+    {
+        LogLoginEvent(logger, httpContext, "failure");
+        return Results.Unauthorized();
+    }
+    var result = await signIn.PasswordSignInAsync(input.UserName, input.Password, false, false);
+    LogLoginEvent(logger, httpContext, result.Succeeded ? "success" : "failure");
+    return result.Succeeded ? Results.NoContent() : Results.Unauthorized();
+}).RequireRateLimiting("login");
         app.MapPost("/api/auth/logout", async (SignInManager<ApplicationUser> signIn) =>
 {
     await signIn.SignOutAsync();
@@ -87,6 +117,9 @@ public static class Lab03Identity
         // Приклад лише mechanics: не повертає identity і не реалізує оцінювану operation.
         app.MapGet("/api/auth/session-check", () => Results.NoContent()).RequireAuthorization();
     }
+    private static void LogLoginEvent(ILogger logger, HttpContext httpContext, string result) =>
+    logger.LogInformation("Auth event {EventType}: result {Result}, time {OccurredAtUtc}, trace {TraceId}",
+        "login", result, DateTimeOffset.UtcNow, httpContext.TraceIdentifier);
     private static IResult GetCurrentUser(HttpContext httpContext)
     {
         var userId = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

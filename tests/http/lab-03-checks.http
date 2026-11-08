@@ -5,3 +5,33 @@ POST {{api}}/api/auth/register
 Content-Type: application/json
 
 { "userName": "x1", "email": "x1@example.test", "displayName": "X" }
+
+### /api/me без cookie, без header (до: 501, після: 401)
+GET {{api}}/api/me
+
+### /api/me без cookie, з header Bob (до: 200 Bob, після: 401)
+GET {{api}}/api/me
+X-Demo-UserId: 10000000-0000-0000-0000-000000000002
+
+### A: анонімний create (до: 201 без входу; після: 401)
+POST {{api}}/api/incidents
+Content-Type: application/json
+
+{ "title": "anon-{{$guid}}", "description": "перевірка захисту", "severity": "Low", "occurredAtUtc": "2026-11-08T10:00:00Z" }
+
+### B: login як Bob (пароль вводиться у вікні при запуску)
+# @prompt password
+POST {{api}}/api/auth/login
+Content-Type: application/json
+
+{ "userName": "bob", "password": "{{password}}" }
+
+### C: Bob створює запис із підробленим owner Alice
+# @name forged
+POST {{api}}/api/incidents
+Content-Type: application/json
+
+{ "title": "forged-{{$guid}}", "description": "forged owner", "severity": "Low", "occurredAtUtc": "2026-11-08T10:00:00Z", "ownerUserId": "10000000-0000-0000-0000-000000000001" }
+
+### D: власник створеного запису
+GET {{api}}/api/incidents/{{forged.response.body.$.id}}

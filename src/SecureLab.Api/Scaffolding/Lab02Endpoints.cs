@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using SecureLab.Api.Data;
 using SecureLab.Api.Data.Entities;
+using System.Security.Claims;
 
 namespace SecureLab.Api.Scaffolding;
 
@@ -46,7 +47,7 @@ public static class Lab02Endpoints
                 row.Severity.ToString(), row.Status.ToString(), row.CreatedAtUtc)));
         });
 
-        app.MapPost("/api/incidents", async (CreateIncidentRequest request, SecureLabDbContext db, CancellationToken ct) =>
+        app.MapPost("/api/incidents", async (CreateIncidentRequest request, HttpContext httpContext, SecureLabDbContext db, CancellationToken ct) =>
         {
             // Час фіксуємо один раз на початку обробки.
             var now = DateTimeOffset.UtcNow;
@@ -101,10 +102,13 @@ public static class Lab02Endpoints
                     detail: "Активний інцидент із таким заголовком уже існує.");
 
             // 9. Entity: server-managed поля встановлює лише сервер.
+            // Власник береться лише з перевіреного principal, а не з тіла запиту.
+            if (!Guid.TryParse(httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var ownerUserId))
+                return Results.Problem(statusCode: StatusCodes.Status500InternalServerError);
             var incident = new Incident
             {
                 Id = Guid.NewGuid(),
-                OwnerUserId = DbSeeder.AliceId,
+                OwnerUserId = ownerUserId,
                 Title = title,
                 Description = description,
                 Severity = severity,
@@ -122,7 +126,7 @@ public static class Lab02Endpoints
                     incident.Id, incident.Title, incident.Severity.ToString(),
                     incident.Status.ToString(), incident.OccurredAtUtc,
                     incident.CreatedAtUtc, incident.UpdatedAtUtc));
-        });
+        }).RequireAuthorization();
     }
 
     // Екранування спецсимволів LIKE: спочатку \, потім _ і %.

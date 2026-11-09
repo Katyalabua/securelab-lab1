@@ -1,7 +1,85 @@
 <!doctype html>
-<html lang="uk"><meta charset="utf-8"><title>ЛР 03 — сеанс</title>
-<h1>Навчальний сеанс</h1>
-<form id="login"><label>Ім’я <input name="userName" autocomplete="username" required></label>
-<label>Пароль <input name="password" type="password" autocomplete="current-password" required></label><button>Увійти</button></form>
-<button id="me">Мій профіль</button><button id="logout">Вийти</button><pre id="result"></pre>
-<script src="auth-lab.js" defer></script></html>
+<html lang="uk">
+  <head>
+    <meta charset="utf-8" />
+    <title>Auth lab</title>
+  </head>
+  <body>
+    <h1>Автентифікація: сценарій</h1>
+
+    <h2>1. Реєстрація</h2>
+    <form id="register-form">
+      <input
+        name="userName"
+        placeholder="userName"
+        autocomplete="off"
+        required
+      />
+      <input
+        name="email"
+        type="email"
+        placeholder="email"
+        autocomplete="off"
+        required
+      />
+      <input
+        name="displayName"
+        placeholder="displayName"
+        autocomplete="off"
+        required
+      />
+      <input
+        name="password"
+        type="password"
+        placeholder="password"
+        autocomplete="new-password"
+        required
+      />
+      <button>Register</button>
+    </form>
+    <p id="register-status"></p>
+
+    <h2>2. Вхід</h2>
+    <form id="login-form">
+      <input
+        name="userName"
+        placeholder="userName"
+        autocomplete="username"
+        required
+      />
+      <input
+        name="password"
+        type="password"
+        placeholder="password"
+        autocomplete="current-password"
+        required
+      />
+      <button>Login</button>
+    </form>
+    <p id="login-status"></p>
+
+    <h2>3. Профіль (з GET /api/me)</h2>
+    <pre id="profile">Не автентифіковано</pre>
+    <p id="profile-status"></p>
+
+    <h2>4. Новий інцидент</h2>
+    <form id="incident-form">
+      <input name="title" placeholder="title" required />
+      <input name="description" placeholder="description" required />
+      <input
+        name="severity"
+        placeholder="severity (Low/Medium/High/Critical)"
+        value="Low"
+        required
+      />
+      <button>Create</button>
+    </form>
+    <p id="incident-status"></p>
+
+    <h2>5. Вихід</h2>
+    <button id="logout-btn">Logout</button>
+    <p id="logout-status"></p>
+
+    <script src="auth-lab.js"></script>
+  </body>
+</html>

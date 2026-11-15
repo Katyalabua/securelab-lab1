@@ -11,7 +11,7 @@
 | -------------------------------------------------- | ------------------------------------------ |
 | Vulnerable (IDOR PoC)                              | `18ef7cfc431878f8d8753e8e07694323dfe30188` |
 | Виправлення коду                                   | `a47912cc04ac1d06cd53af947a8f25aa050a7ecb` |
-| Fixed (код, тести, матриця; на ньому тег `v0.4.0`) | `<FIXED_HASH>`                             |
+| Fixed (код, тести, матриця; на ньому тег `v0.4.0`) | `88cee25b5b9a4b6d422bac4005ac0e12ee2a750d` |
 
 Усі експерименти виконано лише локально, на штучних облікових записах Alice, Bob, Morgan, Admin та синтетичних даних baseline 2-A. Рядки й розділи відмінного рівня позначено «не виконувалось — рівень відмінний».
 
@@ -63,7 +63,7 @@ Vulnerable commit: `18ef7cfc431878f8d8753e8e07694323dfe30188`. Ресурсна 
 
 ## Виправлення та retest
 
-Fixed commit (на ньому тег `v0.4.0`): `<FIXED_HASH>`; виправлення коду: `a47912cc04ac1d06cd53af947a8f25aa050a7ecb`.
+Fixed commit (на ньому тег `v0.4.0`): `88cee25b5b9a4b6d422bac4005ac0e12ee2a750d`; виправлення коду: `a47912cc04ac1d06cd53af947a8f25aa050a7ecb`.
 
 Порядок endpoint-ів update, delete і triage: завантажити tracked entity (без `AsNoTracking()`) → рішення Read (відмова = той самий 404, що й для неіснуючого id) → рішення потрібної дії (відмова = 403) → для triage перевірка поточного статусу (лише `New`, інакше 409) → сервер сам встановлює наступний стан → `SaveChangesAsync`. Зміна стану відбувається лише після дозволу.
 
@@ -174,7 +174,7 @@ authorization.denied subject=<id Alice> action=incident.triage resource=20000000
 - Команди відтворення (з кореня проєкту): `docker compose --env-file infra/.env.example -f infra/compose.yaml up -d --wait`, `dotnet run --project src/SecureLab.Api -- --reset-database`, `dotnet test tests/SecureLab.Api.Tests/SecureLab.Api.Tests.csproj --configuration Release`, `dotnet run --project src/SecureLab.Api --launch-profile http`.
 - Результат: reset завершується повідомленням про повторне заповнення seed; `dotnet test` без failed, усього тестів `35`. Після PoC стан відновлюється `--reset-database`.
 - Під час тестування виявлено, що обмежувач спроб входу з ЛР 3 відхиляє надто часті login (`rate_limited` у логах API); тести переписано так, щоб клієнти alice, bob, morgan створювались один раз на клас.
-- Hash тегу `v0.4.0` = fixed commit `<FIXED_HASH>` (вписано наступним commit після тегу). Vulnerable commit `18ef7cfc431878f8d8753e8e07694323dfe30188`. Передано: гілка `lab/4-authorization`, тег `v0.4.0`, посилання на private remote, цей звіт у Moodle.
+- Hash тегу `v0.4.0` = fixed commit `88cee25b5b9a4b6d422bac4005ac0e12ee2a750d` (вписано наступним commit після тегу). Vulnerable commit `18ef7cfc431878f8d8753e8e07694323dfe30188`. Передано: гілка `lab/4-authorization`, тег `v0.4.0`, посилання на private remote, цей звіт у Moodle.
 - Не виконувались: відмінний рівень (A-11), A-08b, concurrent transitions. Обмеження: CSRF на cookie mutation (борг до ЛР 6).
 
 ## Використання ШІ (довільна форма; журнал — за бажанням)

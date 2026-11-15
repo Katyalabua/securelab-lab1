@@ -1,0 +1,111 @@
+﻿@host = http://localhost:5080
+@aliceId = 20000000-0000-0000-0000-000000000001
+@bobId = 20000000-0000-0000-0000-000000000002
+@aliceNewId = 20000000-0000-0000-0000-000000000003
+@bob2Id = 20000000-0000-0000-0000-000000000004
+@alice2Id = 20000000-0000-0000-0000-000000000005
+@commentBobId = 30000000-0000-0000-0000-000000000002
+@commentInternalId = 30000000-0000-0000-0000-000000000003
+@morganId = 10000000-0000-0000-0000-000000000003
+
+### 00 Anonymous details
+GET {{host}}/api/incidents/{{aliceId}}
+Accept: application/json
+
+### 01 Alice login
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{ "userName": "alice", "password": "{{seedPassword}}" }
+
+### 02 Alice: власний details
+GET {{host}}/api/incidents/{{aliceId}}
+Accept: application/json
+
+### 03 Alice: details Bob (IDOR) - стан Bob ДО
+GET {{host}}/api/incidents/{{bobId}}
+Accept: application/json
+
+### 04 Alice: update Bob
+PUT {{host}}/api/incidents/{{bobId}}
+Content-Type: application/json
+
+{ "title": "ЗМІНЕНО Alice", "description": "poc", "severity": "Low", "occurredAtUtc": "2026-08-02T14:10:00+00:00" }
+
+### 05 Alice: details Bob ПІСЛЯ update
+GET {{host}}/api/incidents/{{bobId}}
+Accept: application/json
+
+### 06 Alice: forged owner/status у update власного
+PUT {{host}}/api/incidents/{{aliceNewId}}
+Content-Type: application/json
+
+{ "title": "t", "description": "d", "severity": "Low", "occurredAtUtc": "2026-08-03T07:45:00+00:00", "ownerUserId": "{{morganId}}", "status": "Triaged", "role": "Administrator" }
+
+### 07 Alice: details після forged
+GET {{host}}/api/incidents/{{aliceNewId}}
+Accept: application/json
+
+### 08 Alice (Reporter): triage власного 0005
+POST {{host}}/api/incidents/{{alice2Id}}/triage
+
+### 09 Alice: details 0005 після triage
+GET {{host}}/api/incidents/{{alice2Id}}
+Accept: application/json
+
+### 10 Alice: коментар Morgan до інциденту Bob
+GET {{host}}/api/incident-comments/{{commentBobId}}
+Accept: application/json
+
+### 11 Alice: internal comment
+GET {{host}}/api/incident-comments/{{commentInternalId}}
+Accept: application/json
+
+### 12 Alice: delete інциденту Bob 0004
+DELETE {{host}}/api/incidents/{{bob2Id}}
+
+### 13 Alice: неіснуючий id
+GET {{host}}/api/incidents/00000000-0000-0000-0000-00000000dead
+Accept: application/json
+
+### 14 Alice: список
+GET {{host}}/api/incidents
+Accept: application/json
+
+### 15 Bob login
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{ "userName": "bob", "password": "{{seedPassword}}" }
+
+### 16 Bob: details 0004 (чи видалено)
+GET {{host}}/api/incidents/{{bob2Id}}
+Accept: application/json
+
+### 17 Bob: details 0002 (стан Bob)
+GET {{host}}/api/incidents/{{bobId}}
+Accept: application/json
+
+### 18 Morgan login
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{ "userName": "morgan", "password": "{{seedPassword}}" }
+
+### 19 Morgan: details Alice
+GET {{host}}/api/incidents/{{aliceId}}
+Accept: application/json
+
+### 20 Morgan: triage 0003 (лише retest)
+POST {{host}}/api/incidents/{{aliceNewId}}/triage
+
+### 21 Morgan: update Alice (лише retest, очікується 403)
+PUT {{host}}/api/incidents/{{aliceId}}
+Content-Type: application/json
+
+{ "title": "x", "description": "x", "severity": "Low", "occurredAtUtc": "2026-08-01T08:30:00+00:00" }
+
+### 22 Morgan: internal comment
+GET {{host}}/api/incident-comments/{{commentInternalId}}
+Accept: application/json
+
